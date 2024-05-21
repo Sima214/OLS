@@ -33,6 +33,7 @@ private:
     }
     void loadNecessaryGlyphs() noexcept;
     void loadMultiAxis(const std::string& rootScript) noexcept;
+    void loadVorzeCsv(const std::string& rootScript) noexcept;
 
 public:
     static constexpr auto Extension = OFS_PROJECT_EXT;
@@ -52,6 +53,7 @@ public:
     bool ImportFromMedia(const std::string& path) noexcept;
 
     bool AddFunscript(const std::string& path) noexcept;
+    bool AddCsv(const std::string& path) noexcept;
     void RemoveFunscript(int32_t idx) noexcept;
 
     void Update(float delta, bool idleMode) noexcept;

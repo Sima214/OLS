@@ -1,10 +1,12 @@
 #include "OFS_Project.h"
+#include "OFS_FileLogging.h"
 #include "OFS_Localization.h"
 #include "OFS_ImGui.h"
 #include "OFS_DynamicFontAtlas.h"
 #include "OFS_BlockingTask.h"
 #include "OFS_EventSystem.h"
 
+#include "OFS_Util.h"
 #include "subprocess.h"
 
 #include <algorithm>
@@ -18,11 +20,12 @@ static std::array<const char*, 6> VideoExtensions{
     ".m4v",
 };
 
-static std::array<const char*, 4> AudioExtensions{
+static std::array<const char*, 5> AudioExtensions{
     ".mp3",
     ".ogg",
     ".flac",
     ".wav",
+    ".opus",
 };
 
 inline bool static HasMediaExtension(const std::string& pathStr) noexcept
@@ -183,12 +186,20 @@ bool OFS_Project::ImportFromMedia(const std::string& file) noexcept
     basePath = Util::PathFromString(file);
     if (Util::FileExists(file)) {
         projectState.relativeMediaPath = MakePathRelative(file);
-        auto funscriptPath = basePath;
-        auto funscriptPathStr = funscriptPath.replace_extension(".funscript").u8string();
+        {
+            auto funscriptPath = basePath;
+            auto funscriptPathStr = funscriptPath.replace_extension(".funscript").u8string();
 
-        Funscripts.clear();
-        AddFunscript(funscriptPathStr);
-        loadMultiAxis(funscriptPathStr);
+            Funscripts.clear();
+            AddFunscript(funscriptPathStr);
+            loadMultiAxis(funscriptPathStr);
+        }
+
+        {
+            auto csvPath = basePath;
+            auto csvPathStr = csvPath.replace_extension(".csv").u8string();
+            loadVorzeCsv(csvPathStr);
+        }
         valid = true;
         loadNecessaryGlyphs();
     }
@@ -224,6 +235,26 @@ bool OFS_Project::AddFunscript(const std::string& path) noexcept
         script = std::make_shared<Funscript>();
         script->UpdateRelativePath(MakePathRelative(path));
         script = Funscripts.emplace_back(std::move(script));
+    }
+    return loadedScript;
+}
+bool OFS_Project::AddCsv(const std::string& path) noexcept
+{
+    if (!Util::FileExists(path)) {
+        return false;
+    }
+    bool loadedScript = false;
+    auto csvText = Util::ReadFileString(path.c_str());
+    auto script = std::make_shared<Funscript>();
+
+    if (script->ParseFromCsv(csvText)) {
+        // Add existing script to project
+        script = Funscripts.emplace_back(std::move(script));
+        script->UpdateRelativePath(MakePathRelative(path));
+        loadedScript = true;
+    }
+    else {
+        // Ignore.
     }
     return loadedScript;
 }
@@ -295,8 +326,9 @@ void OFS_Project::ShowProjectWindow(bool* open) noexcept
 
         ImGui::Text("%s: %s", TR(MEDIA), projectState.relativeMediaPath.c_str());
 
-        Util::FormatTime(Util::FormatBuffer, sizeof(Util::FormatBuffer), projectState.activeTimer, true);
-        ImGui::Text("%s: %s", TR(TIME_SPENT), Util::FormatBuffer);
+        char timeBuf1[16];
+        Util::FormatTime(timeBuf1, sizeof(timeBuf1), projectState.activeTimer, true);
+        ImGui::Text("%s: %s", TR(TIME_SPENT), timeBuf1);
         ImGui::Separator();
 
         ImGui::Spacing();
@@ -414,6 +446,43 @@ void OFS_Project::loadMultiAxis(const std::string& rootScript) noexcept
         auto& file = relatedFiles[i];
         auto filePathString = file.u8string();
         AddFunscript(filePathString);
+    }
+}
+
+void OFS_Project::loadVorzeCsv(const std::string& rootScript) noexcept
+{
+    std::vector<std::filesystem::path> relatedFiles;
+    {
+        auto filename = Util::Filename(rootScript) + '.';
+        auto searchDirectory = Util::PathFromString(rootScript);
+        searchDirectory.remove_filename();
+
+        std::error_code ec;
+        std::filesystem::directory_iterator dirIt(searchDirectory, ec);
+        for (auto&& entry : dirIt) {
+            auto extension = entry.path()
+                                 .extension()
+                                 .u8string();
+            auto currentFilename = entry.path()
+                                       .filename()
+                                       .replace_extension("")
+                                       .u8string();
+
+            if (extension == ".csv"
+                && Util::StringStartsWith(currentFilename, filename)
+                && currentFilename != filename) {
+                relatedFiles.emplace_back(entry.path());
+            }
+        }
+    }
+    // load the related files
+    AddCsv(rootScript);
+    for (int i = relatedFiles.size() - 1; i >= 0; i -= 1) {
+        auto& file = relatedFiles[i];
+        auto filePathString = file.u8string();
+        if (!AddCsv(filePathString)) {
+            LOGF_ERROR("Couldn't add related csv file `%s`!", filePathString.c_str());
+        }
     }
 }
 

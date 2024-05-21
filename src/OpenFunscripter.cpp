@@ -1,4 +1,5 @@
 ﻿#include "OpenFunscripter.h"
+#include "FunscriptAction.h"
 #include "OFS_Util.h"
 #include "OFS_Profiling.h"
 #include "OFS_ImGui.h"
@@ -9,6 +10,7 @@
 #include "OFS_MpvLoader.h"
 #include "OFS_Localization.h"
 
+#include "imgui.h"
 #include "state/OpenFunscripterState.h"
 #include "state/states/VideoplayerWindowState.h"
 #include "state/states/BaseOverlayState.h"
@@ -56,7 +58,7 @@ bool OpenFunscripter::imguiSetup() noexcept
     // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
+    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
     io.ConfigWindowsMoveFromTitleBarOnly = true;
     io.ConfigViewportsNoDecoration = false;
     io.ConfigViewportsNoAutoMerge = false;
@@ -324,6 +326,7 @@ void OpenFunscripter::setupDefaultLayout(bool force) noexcept
         auto dock_simulator_right_id = ImGui::DockBuilderSplitNode(dock_mode_right_id, ImGuiDir_Down, 0.15f, NULL, &dock_mode_right_id);
         auto dock_action_right_id = ImGui::DockBuilderSplitNode(dock_mode_right_id, ImGuiDir_Down, 0.38f, NULL, &dock_mode_right_id);
         auto dock_stats_right_id = ImGui::DockBuilderSplitNode(dock_mode_right_id, ImGuiDir_Down, 0.38f, NULL, &dock_mode_right_id);
+        auto dock_tcode_right_id = ImGui::DockBuilderSplitNode(dock_mode_right_id, ImGuiDir_Down, 0.38f, NULL, &dock_mode_right_id);
         auto dock_undo_right_id = ImGui::DockBuilderSplitNode(dock_mode_right_id, ImGuiDir_Down, 0.5f, NULL, &dock_mode_right_id);
 
         auto dock_player_control_id = ImGui::DockBuilderSplitNode(dock_time_bottom_id, ImGuiDir_Left, 0.15f, &dock_time_bottom_id, &dock_time_bottom_id);
@@ -435,6 +438,91 @@ void OpenFunscripter::registerBindings()
             Tr::ACTION_ACTION_100, "Actions",
             {
                 { ImGuiMod_None, ImGuiKey_KeypadDivide },
+            });
+        // ADD STEP ACTIONS
+        keys->RegisterAction(
+            { "action_step_toggle",
+                [this]() { toggleActionStepFlag(); } },
+            Tr::ACTION_ACTION_STEP_TOGGLE, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_KeypadMultiply },
+            });
+        keys->RegisterAction(
+            { "action_step_0",
+                [this]() { addEditAction(0, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_0, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_Keypad0 },
+            });
+        keys->RegisterAction(
+            { "action_step_10",
+                [this]() { addEditAction(10, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_10, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_Keypad1 },
+            });
+        keys->RegisterAction(
+            { "action_step_20",
+                [this]() { addEditAction(20, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_20, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_Keypad2 },
+            });
+        keys->RegisterAction(
+            { "action_step_30",
+                [this]() { addEditAction(30, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_30, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_Keypad3 },
+            });
+        keys->RegisterAction(
+            { "action_step_40",
+                [this]() { addEditAction(40, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_40, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_Keypad4 },
+            });
+        keys->RegisterAction(
+            { "action_step_50",
+                [this]() { addEditAction(50, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_50, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_Keypad5 },
+            });
+        keys->RegisterAction(
+            { "action_step_60",
+                [this]() { addEditAction(60, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_60, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_Keypad6 },
+            });
+        keys->RegisterAction(
+            { "action_step_70",
+                [this]() { addEditAction(70, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_70, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_Keypad7 },
+            });
+        keys->RegisterAction(
+            { "action_step_80",
+                [this]() { addEditAction(80, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_80, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_Keypad8 },
+            });
+        keys->RegisterAction(
+            { "action_step_90",
+                [this]() { addEditAction(90, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_90, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_Keypad9 },
+            });
+        keys->RegisterAction(
+            { "action_step_100",
+                [this]() { addEditAction(100, FunscriptAction::ModeFlagBits::Step); } },
+            Tr::ACTION_ACTION_STEP_100, "Actions",
+            {
+                { ImGuiMod_Shift, ImGuiKey_KeypadDivide },
             });
     }
 
@@ -1945,11 +2033,35 @@ void OpenFunscripter::removeAction() noexcept
     }
 }
 
-void OpenFunscripter::addEditAction(int pos) noexcept
+void OpenFunscripter::toggleActionStepFlag() noexcept
+{
+    OFS_PROFILE(__FUNCTION__);
+    auto& script = ActiveFunscript();
+    if (script->HasSelection()) {
+        undoSystem->Snapshot(StateType::ADD_EDIT_ACTIONS, script);
+        auto& selection = script->Selection();
+        for (auto& action : selection) {
+            FunscriptAction new_action = action;
+            new_action.flags ^= FunscriptAction::ModeFlagBits::Step;
+            script->AddEditAction(new_action, action.atS);
+        }
+    }
+    else {
+        auto action = script->GetClosestAction(player->CurrentTime());
+        if (action != nullptr) {
+            undoSystem->Snapshot(StateType::ADD_EDIT_ACTIONS, script);
+            FunscriptAction new_action = *action;
+            new_action.flags ^= FunscriptAction::ModeFlagBits::Step;
+            script->AddEditAction(new_action, player->CurrentTime());
+        }
+    }
+}
+
+void OpenFunscripter::addEditAction(int pos, FunscriptAction::ModeFlags flags) noexcept
 {
     OFS_PROFILE(__FUNCTION__);
     undoSystem->Snapshot(StateType::ADD_EDIT_ACTIONS, ActiveFunscript());
-    scripting->AddEditAction(FunscriptAction(player->CurrentTime(), pos));
+    scripting->AddEditAction(FunscriptAction(player->CurrentTime(), pos, flags));
 }
 
 void OpenFunscripter::cutSelection() noexcept

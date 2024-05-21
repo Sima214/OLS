@@ -62,18 +62,16 @@ inline static const char* getTriggerText(const OFS_ActionTrigger& trigger) noexc
 
     if(!mods.empty() && key != nullptr)
     {
-        FMT("%s+%s", mods.c_str(), key);
+        return FMT("%s+%s", mods.c_str(), key);
     }
     else if(!mods.empty() && key == nullptr) 
     {
-        FMT("%s", mods.c_str());
+        return FMT("%s", mods.c_str());
     }
     else 
     {
-        FMT("%s", key);
+        return FMT("%s", key);
     }
-
-    return Util::FormatBuffer;
 }
 
 OFS_KeybindingSystem::OFS_KeybindingSystem() noexcept

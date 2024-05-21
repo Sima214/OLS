@@ -1,7 +1,9 @@
-/*_________
- /         \ tinyfiledialogs v3.9.0 [Nov 3, 2022] zlib licence
- |tiny file| 
- | dialogs | Copyright (c) 2014 - 2021 Guillaume Vareille http://ysengrin.com
+/* SPDX-License-Identifier: ZLIB
+Copyright (c) 2014 - 2023 Guillaume Vareille http://ysengrin.com
+  _________
+ /         \ tinyfiledialogs v3.9.0 [Nov 3, 2022]
+ |tiny file|
+ | dialogs |
  \____  ___/ http://tinyfiledialogs.sourceforge.net
       \|     git clone http://git.code.sf.net/p/tinyfiledialogs/code tinyfd
 

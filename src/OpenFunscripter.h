@@ -109,7 +109,8 @@ private:
 
     void removeAction(FunscriptAction action) noexcept;
     void removeAction() noexcept;
-    void addEditAction(int pos) noexcept;
+    void toggleActionStepFlag() noexcept;
+    void addEditAction(int pos, FunscriptAction::ModeFlags flags = {}) noexcept;
 
     void saveActiveScriptAs();
 

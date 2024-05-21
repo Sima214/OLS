@@ -212,6 +212,18 @@ ACTION_ACTION_70,Action at 70,Action at 70
 ACTION_ACTION_80,Action at 80,Action at 80
 ACTION_ACTION_90,Action at 90,Action at 90
 ACTION_ACTION_100,Action at 100,Action at 100
+ACTION_ACTION_STEP_TOGGLE,Toggle step flag for action,Toggle step flag for action
+ACTION_ACTION_STEP_0,Step action at 0,Step action at 0
+ACTION_ACTION_STEP_10,Step action at 10,Step action at 10
+ACTION_ACTION_STEP_20,Step action at 20,Step action at 20
+ACTION_ACTION_STEP_30,Step action at 30,Step action at 30
+ACTION_ACTION_STEP_40,Step action at 40,Step action at 40
+ACTION_ACTION_STEP_50,Step action at 50,Step action at 50
+ACTION_ACTION_STEP_60,Step action at 60,Step action at 60
+ACTION_ACTION_STEP_70,Step action at 70,Step action at 70
+ACTION_ACTION_STEP_80,Step action at 80,Step action at 80
+ACTION_ACTION_STEP_90,Step action at 90,Step action at 90
+ACTION_ACTION_STEP_100,Step action at 100,Step action at 100
 ACTION_SAVE_PROJECT,Save project,Save project
 ACTION_QUICK_EXPORT,Quick export,Quick export
 ACTION_SYNC_TIME_WITH_PLAYER,Sync time with player,Sync time with player

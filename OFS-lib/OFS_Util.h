@@ -3,11 +3,13 @@
 #include "SDL_filesystem.h"
 #include "SDL_thread.h"
 #include "SDL_timer.h"
+#include "bitsery/ext/growable.h"
 #include "nlohmann/json.hpp"
 
 #include <memory>
 #include <fstream>
 #include <iomanip>
+#include <type_traits>
 #include <filesystem>
 #include <functional>
 #include <vector>
@@ -86,41 +88,40 @@
 
 #endif
 
-class Util {
-public:
+namespace Util {
     template<typename T>
-    inline static T Clamp(T v, T mn, T mx) noexcept
+    inline T Clamp(T v, T mn, T mx) noexcept
     {
         return (v < mn) ? mn : (v > mx) ? mx
                                         : v;
     }
 
     template<typename T>
-    inline static T Min(T v1, T v2) noexcept
+    inline T Min(T v1, T v2) noexcept
     {
         return (v1 < v2) ? v1 : v2;
     }
 
     template<typename T>
-    inline static T Max(T v1, T v2) noexcept
+    inline T Max(T v1, T v2) noexcept
     {
         return (v1 > v2) ? v1 : v2;
     }
 
     template<typename T>
-    inline static T MapRange(T val, T a1, T a2, T b1, T b2) noexcept
+    inline T MapRange(T val, T a1, T a2, T b1, T b2) noexcept
     {
         return b1 + (val - a1) * (b2 - b1) / (a2 - a1);
     }
 
     template<typename T>
-    inline static T Lerp(T startVal, T endVal, float t) noexcept
+    inline T Lerp(T startVal, T endVal, float t) noexcept
     {
         return startVal + ((endVal - startVal) * t);
     }
 
 #ifdef WIN32
-    inline static std::string WindowsMaxPath(const char* path, int32_t pathLen) noexcept
+    inline std::string WindowsMaxPath(const char* path, int32_t pathLen) noexcept
     {
         std::string buffer;
         buffer.reserve(strlen("\\\\?\\") + pathLen);
@@ -130,7 +131,7 @@ public:
     }
 #endif
 
-    inline static SDL_RWops* OpenFile(const char* path, const char* mode, int32_t path_len) noexcept
+    inline SDL_RWops* OpenFile(const char* path, const char* mode, int32_t path_len) noexcept
     {
 #ifdef WIN32
         SDL_RWops* handle = nullptr;
@@ -147,7 +148,7 @@ public:
         return handle;
     }
 
-    inline static size_t ReadFile(const char* path, std::vector<uint8_t>& buffer) noexcept
+    inline size_t ReadFile(const char* path, std::vector<uint8_t>& buffer) noexcept
     {
         auto file = OpenFile(path, "rb", strlen(path));
         if (file) {
@@ -160,7 +161,7 @@ public:
         return 0;
     }
 
-    inline static std::string ReadFileString(const char* path) noexcept
+    inline std::string ReadFileString(const char* path) noexcept
     {
         std::string str;
         auto file = OpenFile(path, "rb", strlen(path));
@@ -172,7 +173,7 @@ public:
         return str;
     }
 
-    inline static size_t WriteFile(const char* path, const void* buffer, size_t size) noexcept
+    inline size_t WriteFile(const char* path, const void* buffer, size_t size) noexcept
     {
         auto file = OpenFile(path, "wb", strlen(path));
         if (file) {
@@ -183,7 +184,7 @@ public:
         return 0;
     }
 
-    inline static nlohmann::json ParseJson(const std::string& jsonText, bool* success) noexcept
+    inline nlohmann::json ParseJson(const std::string& jsonText, bool* success) noexcept
     {
         nlohmann::json json;
         *success = false;
@@ -200,7 +201,7 @@ public:
         return json;
     }
 
-    inline static nlohmann::json ParseCBOR(const std::vector<uint8_t>& data, bool* success) noexcept
+    inline nlohmann::json ParseCBOR(const std::vector<uint8_t>& data, bool* success) noexcept
     {
         try {
             auto json = nlohmann::json::from_cbor(data);
@@ -214,19 +215,19 @@ public:
         return {};
     }
 
-    inline static std::string SerializeJson(const nlohmann::json& json, bool pretty = false) noexcept
+    inline std::string SerializeJson(const nlohmann::json& json, bool pretty = false) noexcept
     {
         auto jsonText = json.dump(pretty ? 4 : -1, ' ');
         return jsonText;
     }
 
-    inline static std::vector<uint8_t> SerializeCBOR(const nlohmann::json& json) noexcept
+    inline std::vector<uint8_t> SerializeCBOR(const nlohmann::json& json) noexcept
     {
         auto data = nlohmann::json::to_cbor(json);
         return data;
     }
 
-    inline static float ParseTime(const char* timeStr, bool* succ) noexcept
+    inline float ParseTime(const char* timeStr, bool* succ) noexcept
     {
         int hours = 0;
         int minutes = 0;
@@ -253,7 +254,7 @@ public:
         return NAN;
     }
 
-    inline static int FormatTime(char* buf, const int bufLen, float timeSeconds, bool withMs) noexcept
+    inline int FormatTime(char* buf, const int bufLen, float timeSeconds, bool withMs) noexcept
     {
         OFS_PROFILE(__FUNCTION__);
         namespace chrono = std::chrono;
@@ -281,10 +282,15 @@ public:
         }
     }
 
-    static int OpenFileExplorer(const std::string& path);
-    static int OpenUrl(const std::string& url);
+    int OpenFileExplorer(const std::string& path);
+    int OpenUrl(const std::string& url);
 
-    inline static std::filesystem::path Basepath() noexcept
+    std::wstring Utf8ToUtf16(const std::string& str) noexcept;
+
+    std::filesystem::path PathFromString(const std::string& str) noexcept;
+    void ConcatPathSafe(std::filesystem::path& path, const std::string& element) noexcept;
+
+    inline std::filesystem::path Basepath() noexcept
     {
         char* base = SDL_GetBasePath();
         auto path = Util::PathFromString(base);
@@ -292,7 +298,7 @@ public:
         return path;
     }
 
-    inline static std::string Filename(const std::string& path) noexcept
+    inline std::string Filename(const std::string& path) noexcept
     {
         return Util::PathFromString(path)
             .replace_extension("")
@@ -300,7 +306,7 @@ public:
             .u8string();
     }
 
-    inline static bool FileExists(const std::string& file) noexcept
+    inline bool FileExists(const std::string& file) noexcept
     {
         bool exists = false;
 #if WIN32
@@ -320,7 +326,7 @@ public:
         return exists;
     }
 
-    inline static bool DirectoryExists(const std::string& dir) noexcept
+    inline bool DirectoryExists(const std::string& dir) noexcept
     {
         std::error_code ec;
         bool exists = std::filesystem::exists(Util::PathFromString(dir), ec);
@@ -328,30 +334,24 @@ public:
     }
 
     // http://www.martinbroadhurst.com/how-to-trim-a-stdstring.html
-    static std::string& ltrim(std::string& str, const std::string& chars = "\t\n\v\f\r ") noexcept
+    inline std::string& ltrim(std::string& str, const std::string& chars = "\t\n\v\f\r ") noexcept
     {
         str.erase(0, str.find_first_not_of(chars));
         return str;
     }
 
-    static std::string& rtrim(std::string& str, const std::string& chars = "\t\n\v\f\r ") noexcept
+    inline std::string& rtrim(std::string& str, const std::string& chars = "\t\n\v\f\r ") noexcept
     {
         str.erase(str.find_last_not_of(chars) + 1);
         return str;
     }
 
-    static std::string& trim(std::string& str, const std::string& chars = "\t\n\v\f\r ") noexcept
+    inline std::string& trim(std::string& str, const std::string& chars = "\t\n\v\f\r ") noexcept
     {
         return ltrim(rtrim(str, chars), chars);
     }
 
-    inline static bool StringEqualsInsensitive(const std::string& string1, const std::string string2) noexcept
-    {
-        if (string1.length() != string2.length()) return false;
-        return ContainsInsensitive(string1.c_str(), string2.c_str());
-    }
-
-    inline static bool ContainsInsensitive(const char* haystack, const char* needle) noexcept
+    inline bool ContainsInsensitive(const char* haystack, const char* needle) noexcept
     {
         size_t length = SDL_strlen(needle);
         while (*haystack) {
@@ -363,7 +363,13 @@ public:
         return false;
     }
 
-    inline static bool StringEndsWith(const std::string& string, const std::string& ending) noexcept
+    inline bool StringEqualsInsensitive(const std::string& string1, const std::string string2) noexcept
+    {
+        if (string1.length() != string2.length()) return false;
+        return ContainsInsensitive(string1.c_str(), string2.c_str());
+    }
+
+    inline bool StringEndsWith(const std::string& string, const std::string& ending) noexcept
     {
         if (string.length() >= ending.length()) {
             return (0 == string.compare(string.length() - ending.length(), ending.length(), ending));
@@ -371,7 +377,7 @@ public:
         return false;
     }
 
-    inline static bool StringStartsWith(const std::string& string, const std::string& start) noexcept
+    inline bool StringStartsWith(const std::string& string, const std::string& start) noexcept
     {
         if (string.length() >= start.length()) {
             for (int i = 0; i < start.size(); i++) {
@@ -388,20 +394,20 @@ public:
 
     using FileDialogResultHandler = std::function<void(FileDialogResult&)>;
 
-    static void OpenFileDialog(const std::string& title,
+    void OpenFileDialog(const std::string& title,
         const std::string& path,
         FileDialogResultHandler&& handler,
         bool multiple = false,
         const std::vector<const char*>& filters = {},
         const std::string& filterText = "") noexcept;
 
-    static void SaveFileDialog(const std::string& title,
+    void SaveFileDialog(const std::string& title,
         const std::string& path,
         FileDialogResultHandler&& handler,
         const std::vector<const char*>& filters = {},
         const std::string& filterText = "") noexcept;
 
-    static void OpenDirectoryDialog(const std::string& title,
+    void OpenDirectoryDialog(const std::string& title,
         const std::string& path,
         FileDialogResultHandler&& handler) noexcept;
 
@@ -412,16 +418,16 @@ public:
     };
 
     using YesNoDialogResultHandler = std::function<void(YesNoCancel)>;
-    static void YesNoCancelDialog(const std::string& title, const std::string& message, YesNoDialogResultHandler&& handler);
+    void YesNoCancelDialog(const std::string& title, const std::string& message, YesNoDialogResultHandler&& handler);
 
-    static void MessageBoxAlert(const std::string& title, const std::string& message) noexcept;
+    void MessageBoxAlert(const std::string& title, const std::string& message) noexcept;
 
-    static std::string Resource(const std::string& path) noexcept;
+    std::string Resource(const std::string& path) noexcept;
 
-    static std::string Prefpath(const std::string& path = std::string()) noexcept
+    inline std::string Prefpath(const std::string& path = std::string()) noexcept
     {
-        static const char* cachedPref = SDL_GetPrefPath("OFS", "OFS3_data");
-        static std::filesystem::path prefPath = Util::PathFromString(cachedPref);
+        static const char* const cachedPref = SDL_GetPrefPath("OFS", "OFS3_data");
+        static const std::filesystem::path prefPath = Util::PathFromString(cachedPref);
         if (!path.empty()) {
             std::filesystem::path rel = Util::PathFromString(path);
             rel.make_preferred();
@@ -430,16 +436,16 @@ public:
         return prefPath.u8string();
     }
 
-    static std::string PrefpathOFP(const std::string& path) noexcept
+    inline std::string PrefpathOFP(const std::string& path) noexcept
     {
-        static const char* cachedPref = SDL_GetPrefPath("OFS", "OFP_data");
-        static std::filesystem::path prefPath = Util::PathFromString(cachedPref);
+        static const char* const cachedPref = SDL_GetPrefPath("OFS", "OFP_data");
+        static const std::filesystem::path prefPath = Util::PathFromString(cachedPref);
         std::filesystem::path rel = Util::PathFromString(path);
         rel.make_preferred();
         return (prefPath / rel).u8string();
     }
 
-    static bool CreateDirectories(const std::filesystem::path& dirs) noexcept
+    inline bool CreateDirectories(const std::filesystem::path& dirs) noexcept
     {
         std::error_code ec;
 #ifdef WIN32
@@ -462,25 +468,13 @@ public:
         return true;
     }
 
-    static std::wstring Utf8ToUtf16(const std::string& str) noexcept;
+    bool SavePNG(const std::string& path, void* buffer, int32_t width, int32_t height, int32_t channels = 3, bool flipVertical = true) noexcept;
 
-    static std::filesystem::path PathFromString(const std::string& str) noexcept;
-    static void ConcatPathSafe(std::filesystem::path& path, const std::string& element) noexcept;
+    std::filesystem::path FfmpegPath() noexcept;
 
-    static bool SavePNG(const std::string& path, void* buffer, int32_t width, int32_t height, int32_t channels = 3, bool flipVertical = true) noexcept;
+    const char* Format(const char* fmt, ...) noexcept;
 
-    static std::filesystem::path FfmpegPath() noexcept;
-
-    static char FormatBuffer[4096];
-    inline static const char* Format(const char* fmt, ...) noexcept
-    {
-        va_list argp;
-        va_start(argp, fmt);
-        stbsp_vsnprintf(FormatBuffer, sizeof(FormatBuffer), fmt, argp);
-        return FormatBuffer;
-    }
-
-    inline static const char* FormatBytes(size_t bytes) noexcept
+    inline const char* FormatBytes(size_t bytes) noexcept
     {
         if (bytes < 1024) {
             return Util::Format("%lld bytes", bytes); // bytes
@@ -496,7 +490,7 @@ public:
         }
     }
 
-    inline static bool InMainThread() noexcept
+    inline bool InMainThread() noexcept
     {
         static auto Main = SDL_ThreadID();
         return SDL_ThreadID() == Main;
@@ -504,7 +498,7 @@ public:
 
     // https://stackoverflow.com/questions/56940199/how-to-capture-a-unique-ptr-in-a-stdfunction
     template<class F>
-    auto static MakeSharedFunction(F&& f)
+    auto MakeSharedFunction(F&& f)
     {
         return
             [pf = std::make_shared<std::decay_t<F>>(std::forward<F>(f))](auto&&... args) -> decltype(auto) {
@@ -512,9 +506,215 @@ public:
             };
     }
 
-    static void InitRandom() noexcept;
-    static float NextFloat() noexcept;
-    static uint32_t RandomColor(float s, float v, float alpha = 1.f) noexcept;
+    void InitRandom() noexcept;
+    float NextFloat() noexcept;
+    uint32_t RandomColor(float s, float v, float alpha = 1.f) noexcept;
 };
 
 #define FMT(fmt, ...) Util::Format(fmt, __VA_ARGS__)
+
+template<typename FlagBitsType>
+struct FlagTraits {
+    static constexpr bool isBitmask = false;
+};
+
+template<typename BitType>
+class Flags {
+public:
+    using MaskType = typename std::underlying_type<BitType>::type;
+
+private:
+    MaskType _mask;
+
+public:
+    // constructors
+    constexpr Flags() noexcept : _mask(0) {}
+
+    constexpr Flags(BitType bit) noexcept : _mask(static_cast<MaskType>(bit)) {}
+
+    constexpr Flags(Flags<BitType> const& rhs) noexcept = default;
+
+    constexpr explicit Flags(MaskType flags) noexcept : _mask(flags) {}
+
+    // helpers
+    template<typename S>
+    void serialize(S& s)
+    {
+        s.template value<sizeof(MaskType)>(_mask);
+    }
+
+    // relational operators
+    constexpr bool operator<(Flags<BitType> const& rhs) const noexcept
+    {
+        return _mask < rhs._mask;
+    }
+
+    constexpr bool operator<=(Flags<BitType> const& rhs) const noexcept
+    {
+        return _mask <= rhs._mask;
+    }
+
+    constexpr bool operator>(Flags<BitType> const& rhs) const noexcept
+    {
+        return _mask > rhs._mask;
+    }
+
+    constexpr bool operator>=(Flags<BitType> const& rhs) const noexcept
+    {
+        return _mask >= rhs._mask;
+    }
+
+    constexpr bool operator==(Flags<BitType> const& rhs) const noexcept
+    {
+        return _mask == rhs._mask;
+    }
+
+    constexpr bool operator!=(Flags<BitType> const& rhs) const noexcept
+    {
+        return _mask != rhs._mask;
+    }
+
+    // logical operator
+    constexpr bool operator!() const noexcept
+    {
+        return !_mask;
+    }
+
+    // bitwise operators
+    constexpr Flags<BitType> operator&(Flags<BitType> const& rhs) const noexcept
+    {
+        return Flags<BitType>(_mask & rhs._mask);
+    }
+
+    constexpr Flags<BitType> operator|(Flags<BitType> const& rhs) const noexcept
+    {
+        return Flags<BitType>(_mask | rhs._mask);
+    }
+
+    constexpr Flags<BitType> operator^(Flags<BitType> const& rhs) const noexcept
+    {
+        return Flags<BitType>(_mask ^ rhs._mask);
+    }
+
+    constexpr Flags<BitType> operator~() const noexcept
+    {
+        return Flags<BitType>(_mask ^ FlagTraits<BitType>::allFlags._mask);
+    }
+
+    // assignment operators
+    constexpr Flags<BitType>& operator=(Flags<BitType> const& rhs) noexcept = default;
+
+    constexpr Flags<BitType>& operator|=(Flags<BitType> const& rhs) noexcept
+    {
+        _mask |= rhs._mask;
+        return *this;
+    }
+
+    constexpr Flags<BitType>& operator&=(Flags<BitType> const& rhs) noexcept
+    {
+        _mask &= rhs._mask;
+        return *this;
+    }
+
+    constexpr Flags<BitType>& operator^=(Flags<BitType> const& rhs) noexcept
+    {
+        _mask ^= rhs._mask;
+        return *this;
+    }
+
+    // cast operators
+    explicit constexpr operator bool() const noexcept
+    {
+        return !!_mask;
+    }
+
+    explicit constexpr operator MaskType() const noexcept
+    {
+        return _mask;
+    }
+};
+
+// relational operators only needed for pre C++20
+template<typename BitType>
+constexpr bool operator<(BitType bit, Flags<BitType> const& flags) noexcept
+{
+    return flags.operator>(bit);
+}
+
+template<typename BitType>
+constexpr bool operator<=(BitType bit, Flags<BitType> const& flags) noexcept
+{
+    return flags.operator>=(bit);
+}
+
+template<typename BitType>
+constexpr bool operator>(BitType bit, Flags<BitType> const& flags) noexcept
+{
+    return flags.operator<(bit);
+}
+
+template<typename BitType>
+constexpr bool operator>=(BitType bit, Flags<BitType> const& flags) noexcept
+{
+    return flags.operator<=(bit);
+}
+
+template<typename BitType>
+constexpr bool operator==(BitType bit, Flags<BitType> const& flags) noexcept
+{
+    return flags.operator==(bit);
+}
+
+template<typename BitType>
+constexpr bool operator!=(BitType bit, Flags<BitType> const& flags) noexcept
+{
+    return flags.operator!=(bit);
+}
+
+// bitwise operators
+template<typename BitType>
+constexpr Flags<BitType> operator&(BitType bit, Flags<BitType> const& flags) noexcept
+{
+    return flags.operator&(bit);
+}
+
+template<typename BitType>
+constexpr Flags<BitType> operator|(BitType bit, Flags<BitType> const& flags) noexcept
+{
+    return flags.operator|(bit);
+}
+
+template<typename BitType>
+constexpr Flags<BitType> operator^(BitType bit, Flags<BitType> const& flags) noexcept
+{
+    return flags.operator^(bit);
+}
+
+// bitwise operators on BitType
+template<typename BitType,
+    typename std::enable_if<FlagTraits<BitType>::isBitmask, bool>::type = true>
+inline constexpr Flags<BitType> operator&(BitType lhs, BitType rhs) noexcept
+{
+    return Flags<BitType>(lhs) & rhs;
+}
+
+template<typename BitType,
+    typename std::enable_if<FlagTraits<BitType>::isBitmask, bool>::type = true>
+inline constexpr Flags<BitType> operator|(BitType lhs, BitType rhs) noexcept
+{
+    return Flags<BitType>(lhs) | rhs;
+}
+
+template<typename BitType,
+    typename std::enable_if<FlagTraits<BitType>::isBitmask, bool>::type = true>
+inline constexpr Flags<BitType> operator^(BitType lhs, BitType rhs) noexcept
+{
+    return Flags<BitType>(lhs) ^ rhs;
+}
+
+template<typename BitType,
+    typename std::enable_if<FlagTraits<BitType>::isBitmask, bool>::type = true>
+inline constexpr Flags<BitType> operator~(BitType bit) noexcept
+{
+    return ~(Flags<BitType>(bit));
+}

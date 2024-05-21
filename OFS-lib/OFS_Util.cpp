@@ -36,8 +36,6 @@
 #define RND_IMPLEMENTATION
 #include "rnd.h"
 
-char Util::FormatBuffer[4096];
-
 static void SanitizeString(std::string& str) noexcept
 {
     // tinyfiledialogs doesn't like quotes
@@ -60,10 +58,12 @@ inline static int WindowsShellExecute(const wchar_t* op, const wchar_t* program,
 }
 #endif
 
-int Util::OpenFileExplorer(const std::string& str)
+namespace Util {
+
+int OpenFileExplorer(const std::string& str)
 {
 #if defined(WIN32)
-    std::wstring wstr = Util::Utf8ToUtf16(str);
+    std::wstring wstr = Utf8ToUtf16(str);
     std::wstringstream ss;
     ss << L'"' << wstr << L'"';
     auto params = ss.str();
@@ -76,10 +76,10 @@ int Util::OpenFileExplorer(const std::string& str)
 #endif
 }
 
-int Util::OpenUrl(const std::string& url)
+int OpenUrl(const std::string& url)
 {
 #if defined(WIN32)
-    std::wstring wstr = Util::Utf8ToUtf16(url);
+    std::wstring wstr = Utf8ToUtf16(url);
     std::wstringstream ss;
     ss << L'"' << wstr << L'"';
     auto params = ss.str();
@@ -94,7 +94,7 @@ int Util::OpenUrl(const std::string& url)
 #endif
 }
 
-void Util::OpenFileDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler, bool multiple, const std::vector<const char*>& filters, const std::string& filterText) noexcept
+void OpenFileDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler, bool multiple, const std::vector<const char*>& filters, const std::string& filterText) noexcept
 {
     struct FileDialogThreadData {
         bool multiple = false;
@@ -107,20 +107,20 @@ void Util::OpenFileDialog(const std::string& title, const std::string& path, Fil
     auto thread = [](void* ctx) {
         auto data = (FileDialogThreadData*)ctx;
 
-        if (!Util::DirectoryExists(data->path)) {
+        if (!DirectoryExists(data->path)) {
             data->path = "";
         }
 
 #ifdef WIN32
-        std::wstring wtitle = Util::Utf8ToUtf16(data->title);
-        std::wstring wpath = Util::Utf8ToUtf16(data->path);
-        std::wstring wfilterText = Util::Utf8ToUtf16(data->filterText);
+        std::wstring wtitle = Utf8ToUtf16(data->title);
+        std::wstring wpath = Utf8ToUtf16(data->path);
+        std::wstring wfilterText = Utf8ToUtf16(data->filterText);
         std::vector<std::wstring> wfilters;
         std::vector<const wchar_t*> wc_str;
         wfilters.reserve(data->filters.size());
         wc_str.reserve(data->filters.size());
         for (auto&& filter : data->filters) {
-            wfilters.emplace_back(Util::Utf8ToUtf16(filter));
+            wfilters.emplace_back(Utf8ToUtf16(filter));
             wc_str.push_back(wfilters.back().c_str());
         }
         auto result = tinyfd_utf16to8(tinyfd_openFileDialogW(wtitle.c_str(), wpath.c_str(), wc_str.size(), wc_str.data(), wfilterText.empty() ? NULL : wfilterText.c_str(), data->multiple));
@@ -167,7 +167,7 @@ void Util::OpenFileDialog(const std::string& title, const std::string& path, Fil
     SDL_DetachThread(handle);
 }
 
-void Util::SaveFileDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler, const std::vector<const char*>& filters, const std::string& filterText) noexcept
+void SaveFileDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler, const std::vector<const char*>& filters, const std::string& filterText) noexcept
 {
     struct SaveFileDialogThreadData {
         std::string title;
@@ -179,7 +179,7 @@ void Util::SaveFileDialog(const std::string& title, const std::string& path, Fil
     auto thread = [](void* ctx) -> int32_t {
         auto data = (SaveFileDialogThreadData*)ctx;
 
-        auto dialogPath = Util::PathFromString(data->path);
+        auto dialogPath = PathFromString(data->path);
         dialogPath.remove_filename();
         std::error_code ec;
         if (!std::filesystem::exists(dialogPath, ec)) {
@@ -212,7 +212,7 @@ void Util::SaveFileDialog(const std::string& title, const std::string& path, Fil
     SDL_DetachThread(handle);
 }
 
-void Util::OpenDirectoryDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler) noexcept
+void OpenDirectoryDialog(const std::string& title, const std::string& path, FileDialogResultHandler&& handler) noexcept
 {
     struct OpenDirectoryDialogThreadData {
         std::string title;
@@ -222,7 +222,7 @@ void Util::OpenDirectoryDialog(const std::string& title, const std::string& path
     auto thread = [](void* ctx) -> int32_t {
         auto data = (OpenDirectoryDialogThreadData*)ctx;
 
-        if (!Util::DirectoryExists(data->path)) {
+        if (!DirectoryExists(data->path)) {
             data->path = "";
         }
 
@@ -249,7 +249,7 @@ void Util::OpenDirectoryDialog(const std::string& title, const std::string& path
     SDL_DetachThread(handle);
 }
 
-void Util::YesNoCancelDialog(const std::string& title, const std::string& message, YesNoDialogResultHandler&& handler)
+void YesNoCancelDialog(const std::string& title, const std::string& message, YesNoDialogResultHandler&& handler)
 {
     struct YesNoCancelThreadData {
         std::string title;
@@ -259,16 +259,16 @@ void Util::YesNoCancelDialog(const std::string& title, const std::string& messag
     auto thread = [](void* user) -> int {
         YesNoCancelThreadData* data = (YesNoCancelThreadData*)user;
         auto result = tinyfd_messageBox(data->title.c_str(), data->message.c_str(), "yesnocancel", NULL, 1);
-        Util::YesNoCancel enumResult;
+        YesNoCancel enumResult;
         switch (result) {
             case 0:
-                enumResult = Util::YesNoCancel::Cancel;
+                enumResult = YesNoCancel::Cancel;
                 break;
             case 1:
-                enumResult = Util::YesNoCancel::Yes;
+                enumResult = YesNoCancel::Yes;
                 break;
             case 2:
-                enumResult = Util::YesNoCancel::No;
+                enumResult = YesNoCancel::No;
                 break;
         }
         EV::Enqueue<OFS_DeferEvent>([resultHandler = std::move(data->handler), enumResult]() {
@@ -286,7 +286,7 @@ void Util::YesNoCancelDialog(const std::string& title, const std::string& messag
     SDL_DetachThread(handle);
 }
 
-void Util::MessageBoxAlert(const std::string& title, const std::string& message) noexcept
+void MessageBoxAlert(const std::string& title, const std::string& message) noexcept
 {
     struct MessageBoxData {
         std::string title;
@@ -311,14 +311,14 @@ void Util::MessageBoxAlert(const std::string& title, const std::string& message)
     SDL_DetachThread(handle);
 }
 
-std::string Util::Resource(const std::string& path) noexcept
+std::string Resource(const std::string& path) noexcept
 {
-    auto base = Util::Basepath() / L"data" / Util::Utf8ToUtf16(path);
+    auto base = Basepath() / L"data" / Utf8ToUtf16(path);
     base.make_preferred();
     return base.u8string();
 }
 
-std::wstring Util::Utf8ToUtf16(const std::string& str) noexcept
+std::wstring Utf8ToUtf16(const std::string& str) noexcept
 {
     try {
         std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -331,19 +331,19 @@ std::wstring Util::Utf8ToUtf16(const std::string& str) noexcept
     }
 }
 
-std::filesystem::path Util::PathFromString(const std::string& str) noexcept
+std::filesystem::path PathFromString(const std::string& str) noexcept
 {
     auto result = std::filesystem::u8path(str);
     result.make_preferred();
     return result;
 }
 
-void Util::ConcatPathSafe(std::filesystem::path& path, const std::string& element) noexcept
+void ConcatPathSafe(std::filesystem::path& path, const std::string& element) noexcept
 {
-    path /= Util::PathFromString(element);
+    path /= PathFromString(element);
 }
 
-bool Util::SavePNG(const std::string& path, void* buffer, int32_t width, int32_t height, int32_t channels, bool flipVertical) noexcept
+bool SavePNG(const std::string& path, void* buffer, int32_t width, int32_t height, int32_t channels, bool flipVertical) noexcept
 {
     stbi_flip_vertically_on_write(flipVertical);
     bool success = stbi_write_png(path.c_str(),
@@ -352,29 +352,38 @@ bool Util::SavePNG(const std::string& path, void* buffer, int32_t width, int32_t
     return success;
 }
 
-std::filesystem::path Util::FfmpegPath() noexcept
+std::filesystem::path FfmpegPath() noexcept
 {
 #if WIN32
-    return Util::PathFromString(Util::Prefpath("ffmpeg.exe"));
+    return PathFromString(Prefpath("ffmpeg.exe"));
 #else
     auto ffmpegPath = std::filesystem::path("ffmpeg");
     return ffmpegPath;
 #endif
 }
 
+const char* Format(const char* fmt, ...) noexcept
+{
+    static char Buffer[4096];
+    va_list argp;
+    va_start(argp, fmt);
+    stbsp_vsnprintf(Buffer, sizeof(Buffer), fmt, argp);
+    return Buffer;
+}
+
 static rnd_pcg_t pcg;
-void Util::InitRandom() noexcept
+void InitRandom() noexcept
 {
     time_t t = time(0);
     rnd_pcg_seed(&pcg, t);
 }
 
-float Util::NextFloat() noexcept
+float NextFloat() noexcept
 {
     return rnd_pcg_nextf(&pcg);
 }
 
-uint32_t Util::RandomColor(float s, float v, float alpha) noexcept
+uint32_t RandomColor(float s, float v, float alpha) noexcept
 {
     // This is cool :^)
     // https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
@@ -387,4 +396,6 @@ uint32_t Util::RandomColor(float s, float v, float alpha) noexcept
     ImColor color;
     color.SetHSV(H, s, v, alpha);
     return ImGui::ColorConvertFloat4ToU32(color);
+}
+
 }

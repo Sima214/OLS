@@ -308,6 +308,7 @@ inline static void ProcessEvents(MpvPlayerContext* ctx) noexcept
                     case MpvFramesPerSecond:
                         ctx->data.fps = *(double*)prop->data;
                         ctx->data.averageFrameTime = (1.0 / ctx->data.fps);
+                        // LOGF_INFO("Video fps: %f", ctx->data.fps);
                         break;
                     case MpvDuration:
                         ctx->data.duration = *(double*)prop->data;
