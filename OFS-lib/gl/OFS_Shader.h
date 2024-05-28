@@ -9,7 +9,7 @@ protected:
 	unsigned int program = 0;
 public:
 	ShaderBase(const char* vtxShader, const char* fragShader) noexcept;
-	virtual ~ShaderBase() noexcept;
+	// virtual ~ShaderBase() noexcept;
 	void Use() noexcept;
 
 	unsigned int Handle() const noexcept { return program; }

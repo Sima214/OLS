@@ -6,7 +6,6 @@
 #include "OFS_Shader.h"
 #include "OFS_GL.h"
 
-#include <chrono>
 #include <memory>
 #include <array>
 

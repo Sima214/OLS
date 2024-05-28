@@ -1,7 +1,9 @@
 #include "OFS_Shader.h"
-#include "OFS_Util.h"
 
+#include "OFS_FileLogging.h"
 #include "OFS_GL.h"
+
+#include <cstddef>
 
 ShaderBase::ShaderBase(const char* vtxShader, const char* fragShader) noexcept
 {
@@ -54,10 +56,12 @@ ShaderBase::ShaderBase(const char* vtxShader, const char* fragShader) noexcept
 	glDeleteShader(fragment);
 }
 
+#if 0
 ShaderBase::~ShaderBase() noexcept
 {
 	LOG_WARN("Shader destructor called. Might be a resource leak.");
 }
+#endif
 
 void ShaderBase::Use() noexcept
 {
