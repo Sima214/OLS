@@ -2,6 +2,23 @@
 
 #include "SDL_timer.h"
 
+OFS_StateRegistry& OFS_StateRegistry::Get() noexcept
+{
+    static OFS_StateRegistry instance;
+    return instance;
+}
+
+const OFS_StateMetadata* OFS_StateRegistry::Find(std::string_view typeName) const noexcept
+{
+    auto iter = std::find_if(metadata.begin(), metadata.end(), [&](auto&& x) {
+        return x.Name() == typeName;
+    });
+    if (iter != metadata.end()) {
+        return &(*iter);
+    }
+    return nullptr;
+}
+
 OFS_StateManager* OFS_StateManager::instance = nullptr;
 
 void OFS_StateManager::Init() noexcept

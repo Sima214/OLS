@@ -76,22 +76,9 @@ class OFS_StateMetadata
 class OFS_StateRegistry
 {
     public:
-    static OFS_StateRegistry& Get() noexcept
-    {
-        static OFS_StateRegistry instance;
-        return instance;
-    }
+    static OFS_StateRegistry& Get() noexcept;
 
-    const OFS_StateMetadata* Find(std::string_view typeName) const noexcept
-    {
-        auto iter = std::find_if(metadata.begin(), metadata.end(), [&](auto&& x) {
-            return x.Name() == typeName;
-        });
-        if (iter != metadata.end()) {
-            return &(*iter);
-        }
-        return nullptr;
-    }
+    const OFS_StateMetadata* Find(std::string_view typeName) const noexcept;
 
     template<typename T>
     void RegisterState()
