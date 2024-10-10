@@ -1,6 +1,7 @@
 #include "Funscript.h"
 
 #include "FunscriptAction.h"
+#include "OFS_FileLogging.h"
 #include "OFS_Util.h"
 #include "OFS_Profiling.h"
 
@@ -13,6 +14,7 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <cstdlib>
 #include <limits>
 
 std::array<const char*, 9> Funscript::AxisNames = {
@@ -177,6 +179,81 @@ float Funscript::GetPositionAtTime(float time) const noexcept
     }
 
     return data.Actions.back().pos;
+}
+
+std::tuple<float, float, float> Funscript::getInterpolatedAction(float time) const noexcept
+{
+    if (data.Actions.size() == 0) {
+        return { 0, 0, std::numeric_limits<float>::infinity() };
+    }
+    else if (data.Actions.size() == 1) {
+        float pos_norm = data.Actions[0].pos / 100.f;
+        return { pos_norm, pos_norm, std::numeric_limits<float>::infinity() };
+    }
+
+    // TODO: Add support for step actions.
+
+    // Boundary conditions.
+    if (time <= data.Actions.front().atS) {
+        float pos_norm = data.Actions.front().pos / 100.f;
+        return { pos_norm, pos_norm, std::numeric_limits<float>::infinity() };
+    }
+    else if (time >= data.Actions.back().atS) {
+        float pos_norm = data.Actions.back().pos / 100.f;
+        return { pos_norm, pos_norm, std::numeric_limits<float>::infinity() };
+    }
+
+    size_t index = 0;
+    auto it = data.Actions.lower_bound(FunscriptAction(time, 0));
+    if (it != data.Actions.end()) {
+        index = std::distance(data.Actions.begin(), it);
+        if (index > 0) {
+            index -= 1;
+        }
+    }
+    else /* it == _actions.end() */ {
+        LOG_ERROR("Funscript::get_interpolated_action: "
+                  "lower_bound returned end.");
+        std::abort();
+    }
+
+    auto& curr_action = data.Actions.at(index);
+    auto& next_action = data.Actions.at(index + 1);
+
+    if (time > curr_action.atS && time < next_action.atS) [[likely]] {
+        if (!(curr_action.flags & FunscriptAction::ModeFlagBits::Step)) [[likely]] {
+            // Interpolate position.
+            float pos_start = curr_action.pos / 100.f;
+            float pos_end = next_action.pos / 100.f;
+            float pos_diff = pos_end - pos_start;
+            float time_diff = next_action.atS - curr_action.atS;
+            float factor = (time - curr_action.atS) / time_diff;
+
+            float interp = pos_start + (factor * pos_diff);
+            return { interp, pos_end, next_action.atS - time };
+        }
+        else /* curr_action.flags & FunscriptAction::ModeFlagBits::Step */ {
+            // No interpolation for step mode action, just calculate the interval.
+            float pos_norm = curr_action.pos / 100.f;
+            return { pos_norm, pos_norm, next_action.atS - time };
+        }
+    }
+    else if (curr_action.atS == time) [[unlikely]] {
+        LOG_ERROR("Funscript::get_interpolated_action: "
+                  "exact match with curr_action shouldn't be possible.");
+        std::abort();
+        // float pos_norm = curr_action.pos / 100.f;
+        // return {pos_norm, pos_norm, 0.};
+    }
+    else if (next_action.atS == time) {
+        float pos_norm = next_action.pos / 100.f;
+        return { pos_norm, pos_norm, 0. };
+    }
+    else {
+        LOG_ERROR("Funscript::get_interpolated_action: "
+                  "lower_bound didn't return a valid index.");
+        std::abort();
+    }
 }
 
 void Funscript::AddMultipleActions(const FunscriptArray& actions) noexcept

@@ -163,3 +163,24 @@ add_library(civetweb STATIC ${civetweb_SRC})
 target_include_directories(civetweb PUBLIC "civetweb/include/")
 target_compile_definitions(civetweb PRIVATE "NO_SSL=1"
 											"USE_WEBSOCKET=1")
+
+# ===========
+# =  asio   =
+# ===========
+include(ExternalProject)
+ExternalProject_Add(
+	asio-src
+	URL https://sourceforge.net/projects/asio/files/asio/1.28.0%20%28Stable%29/asio-1.28.0.tar.bz2
+	CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    LOG_DOWNLOAD ON
+)
+ExternalProject_Get_Property(asio-src source_dir)
+add_library(asio INTERFACE)
+target_include_directories(asio INTERFACE ${source_dir}/include)
+
+# ===========
+# = sevfate =
+# ===========
+add_subdirectory("sevfate/")

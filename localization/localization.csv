@@ -29,7 +29,7 @@ LUA_SCRIPT,Lua script,Lua script
 REDO_STACK,Redo stack,Redo stack
 UNDO_STACK,Undo stack,Undo stack
 UNDO_REDO_HISTORY,Undo/Redo history,Undo/Redo history
-T_CODE,T-Code,T-Code
+ETCODE,eTCode,eTCode
 PORT,Port,Port
 OPEN_PORT,Open port,Open port
 LIMITS,Limits,Limits

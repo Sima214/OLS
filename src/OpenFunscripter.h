@@ -1,4 +1,5 @@
 #pragma once
+#include "OFS_ETCode/interactive.hpp"
 #include "OFS_ScriptingMode.h"
 #include "OFS_KeybindingSystem.h"
 #include "OFS_Preferences.h"
@@ -154,6 +155,7 @@ public:
     std::unique_ptr<OFS_FunscriptMetadataEditor> metadataEditor;
     std::unique_ptr<OFS_WebsocketApi> webApi;
     std::unique_ptr<OFS_ChapterManager> chapterMgr;
+    std::unique_ptr<eTCodeInteractive> etcode;
 
     std::unique_ptr<OFS_Project> LoadedProject;
 

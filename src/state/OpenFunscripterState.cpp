@@ -7,6 +7,8 @@
 #include "SpecialFunctionsState.h"
 #include "WebsocketApiState.h"
 
+#include <UI/OFS_ETCode/state.hpp>
+
 void OpenFunscripterState::RegisterAll() noexcept
 {
 	// App state
@@ -17,6 +19,7 @@ void OpenFunscripterState::RegisterAll() noexcept
 	OFS_REGISTER_STATE(SimulatorDefaultConfigState);
 	OFS_REGISTER_STATE(SpecialFunctionState);
 	OFS_REGISTER_STATE(WebsocketApiState);
+	OFS_REGISTER_STATE(eTCodeInteractiveState);
 
 	// Project state
 	OFS_REGISTER_STATE(TempoOverlayState);

@@ -16,6 +16,12 @@ set(OPEN_FUNSCRIPTER_SOURCES
   "UI/OFS_FunscriptMetadataEditor.cpp"
   "UI/OFS_ChapterManager.cpp"
 
+  "UI/OFS_ETCode/axis_control.cpp"
+  "UI/OFS_ETCode/interactive.cpp"
+  "UI/OFS_ETCode/interactive_axis.cpp"
+  "UI/OFS_ETCode/interactive_prop.cpp"
+  "UI/OFS_ETCode/interactive_ui.cpp"
+
   "api/OFS_WebsocketApi.cpp"
   "api/OFS_WebsocketApiClient.cpp"
   "api/OFS_WebsocketApiEvents.cpp"
@@ -66,6 +72,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
   sol2
   OFS_lib
   civetweb
+  asio
+  etcode
 )
 
 if(WIN32)

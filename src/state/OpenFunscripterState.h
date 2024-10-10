@@ -39,6 +39,7 @@ struct OpenFunscripterState
     bool showHistory = true;
     bool showSimulator = true;
     bool showSpecialFunctions = false;
+    bool showETCode = false;
     bool showWsApi = false;
     bool showChapterManager = false;
 
@@ -67,6 +68,7 @@ REFL_TYPE(OpenFunscripterState)
     REFL_FIELD(showHistory)
     REFL_FIELD(showSimulator)
     REFL_FIELD(showSpecialFunctions)
+    REFL_FIELD(showETCode)
     REFL_FIELD(showWsApi)
     REFL_FIELD(showChapterManager)
 REFL_END

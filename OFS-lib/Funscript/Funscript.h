@@ -9,6 +9,7 @@
 #include <string>
 #include <memory>
 #include <chrono>
+#include <tuple>
 
 #include "OFS_Util.h"
 #include "FunscriptSpline.h"
@@ -100,6 +101,7 @@ private:
     void checkForInvalidatedActions() noexcept;
 
     FunscriptAction* getAction(FunscriptAction action) noexcept;
+
 public:
     static FunscriptAction* getActionAtTime(FunscriptArray& actions, float time, float maxErrorTime) noexcept;
 
@@ -173,6 +175,15 @@ public:
     inline const FunscriptAction* GetClosestAction(float time) noexcept { return getActionAtTime(data.Actions, time, std::numeric_limits<float>::max()); }
 
     float GetPositionAtTime(float time) const noexcept;
+
+    /**
+     * Calculate and return the current and target position
+     * and the remaining time until the target position is reached.
+     * 
+     * NOTE: Playback speed compensation is not applied.
+     */
+    std::tuple<float, float, float> getInterpolatedAction(
+        float time) const noexcept;
 
     inline void AddAction(FunscriptAction newAction) noexcept { addAction(data.Actions, newAction); }
     void AddMultipleActions(const FunscriptArray& actions) noexcept;

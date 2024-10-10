@@ -1,5 +1,6 @@
 ﻿#include "OpenFunscripter.h"
 #include "FunscriptAction.h"
+#include "OFS_ETCode/interactive.hpp"
 #include "OFS_Util.h"
 #include "OFS_Profiling.h"
 #include "OFS_ImGui.h"
@@ -108,6 +109,7 @@ static void SaveState() noexcept
 OpenFunscripter::~OpenFunscripter() noexcept
 {
     // needs a certain destruction order
+    etcode.reset();
     scripting.reset();
     controllerInput.reset();
     specialFunctions.reset();
@@ -261,6 +263,7 @@ bool OpenFunscripter::Init(int argc, char* argv[])
         ExportClipForChapter::HandleEvent(EVENT_SYSTEM_BIND(this, &OpenFunscripter::ExportClip)));
 
     specialFunctions = std::make_unique<SpecialFunctionsWindow>();
+    etcode = std::make_unique<eTCodeInteractive>();
     controllerInput = std::make_unique<ControllerInput>();
     controllerInput->Init();
     simulator.Init();
@@ -1674,6 +1677,7 @@ void OpenFunscripter::Step() noexcept
             ShowAboutWindow(&ShowAbout);
 
             specialFunctions->ShowFunctionsWindow(&ofsState.showSpecialFunctions);
+            etcode->render_ui(&ofsState.showETCode);
             undoSystem->ShowUndoRedoHistory(&ofsState.showHistory);
             simulator.ShowSimulator(&ofsState.showSimulator, ActiveFunscript(), player->CurrentTime(), overlayState.SplineMode);
 
@@ -2589,6 +2593,7 @@ void OpenFunscripter::ShowMainMenuBar() noexcept
             if (ImGui::MenuItem(TR(METADATA), NULL, &ShowMetadataEditor)) {}
             if (ImGui::MenuItem(TR(ACTION_EDITOR), NULL, &ofsState.showActionEditor)) {}
             if (ImGui::MenuItem(TR(SPECIAL_FUNCTIONS), NULL, &ofsState.showSpecialFunctions)) {}
+            if (ImGui::MenuItem(TR(ETCODE), NULL, &ofsState.showETCode)) {}
             if (ImGui::MenuItem(TR(WEBSOCKET_API), NULL, &ofsState.showWsApi)) {}
             if (ImGui::MenuItem(TR(CHAPTERS), NULL, &ofsState.showChapterManager)) {}
 
