@@ -42,9 +42,9 @@ bool OFS_MpvLoader::Load() noexcept
 #elif defined(__APPLE__)
     mpvHandle = SDL_LoadObject("libmpv.dylib");
 #else // linux
-    mpvHandle = SDL_LoadObject("libmpv.so.2");
+    mpvHandle = SDL_LoadObject("libmpv-alt.so");
     if (!mpvHandle) {
-        mpvHandle = SDL_LoadObject("libmpv.so.1");
+        mpvHandle = SDL_LoadObject("libmpv.so.2");
     }
 #endif
 

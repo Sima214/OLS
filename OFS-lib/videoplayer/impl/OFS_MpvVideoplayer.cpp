@@ -190,6 +190,11 @@ bool OFS_Videoplayer::Init(bool hwAccel) noexcept
         LOG_WARN("Failed to set mpv: loop-file=inf");
     }
 
+    error = mpv_set_property_string(CTX->mpv, "vo", "libmpv");
+    if(error != 0) {
+        LOG_WARN("Failed to set mpv: vo=libmpv");
+    }
+
     if(hwAccel) {
         error = mpv_set_property_string(CTX->mpv, "profile", "gpu-hq");
         if(error != 0) {

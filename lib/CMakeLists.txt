@@ -93,23 +93,6 @@ add_library(imgui_stdlib STATIC "imgui/misc/cpp/imgui_stdlib.cpp" "imgui/misc/cp
 target_include_directories(imgui_stdlib PUBLIC "imgui/misc/cpp")
 target_link_libraries(imgui_stdlib PUBLIC imgui)
 
-# ========
-# = SDL2 =
-# ========
-set(SDL_SHARED OFF CACHE BOOL "" FORCE)
-set(SDL_STATIC ON CACHE BOOL "" FORCE)
-set(SDL_AUDIO OFF CACHE BOOL "" FORCE)
-set(SDL_RENDER OFF CACHE BOOL "" FORCE)
-set(SDL_SENSOR OFF CACHE BOOL "" FORCE)
-set(SDL_HAPTIC OFF CACHE BOOL "" FORCE)
-set(SDL_POWER OFF CACHE BOOL "" FORCE)
-set(SDL_LIBC ON CACHE BOOL "" FORCE)
-set(SDL_DIRECTX OFF CACHE BOOL "" FORCE)
-set(SDL_RENDER_D3D OFF CACHE BOOL "" FORCE)
-set(SDL_VULKAN OFF CACHE BOOL "" FORCE)
-add_subdirectory("SDL2/")
-
-
 # ===================
 # = tinifiledialogs = 
 # ===================
@@ -175,6 +158,7 @@ ExternalProject_Add(
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
     LOG_DOWNLOAD ON
+	DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 ExternalProject_Get_Property(asio-src source_dir)
 add_library(asio INTERFACE)

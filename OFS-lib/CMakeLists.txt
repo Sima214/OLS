@@ -1,3 +1,8 @@
+# ========
+# = SDL2 =
+# ========
+find_package(SDL2 REQUIRED CONFIG)
+
 project(OFS_lib)
 
 set(OFS_LIB_SOURCES
@@ -50,6 +55,7 @@ set(OFS_LIB_SOURCES
 
 add_library(${PROJECT_NAME} STATIC ${OFS_LIB_SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC
+	${SDL2_INCLUDE_DIRS}
 	"${PROJECT_SOURCE_DIR}/event/"
 	"${PROJECT_SOURCE_DIR}/Funscript/"
 	"${PROJECT_SOURCE_DIR}/UI/"
@@ -70,8 +76,7 @@ add_custom_command(OUTPUT "OFS_StringsGenerated.cpp" "OFS_StringsGenerated.h"
                    VERBATIM)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-	SDL2-static
-	SDL2main
+	${SDL2_LIBRARIES}
 	nlohmann_json
 	glad2
 	imgui

@@ -111,7 +111,7 @@ OpenFunscripter::~OpenFunscripter() noexcept
     // needs a certain destruction order
     etcode.reset();
     scripting.reset();
-    controllerInput.reset();
+    // controllerInput.reset();
     specialFunctions.reset();
     LoadedProject.reset();
     playerWindow.reset();
@@ -149,12 +149,9 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     preferences = std::make_unique<OFS_Preferences>();
     const auto& prefState = PreferenceState::State(preferences->StateHandle());
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0) {
+    LOG_INFO("SDL init...");
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
         LOG_ERROR(SDL_GetError());
-        return false;
-    }
-    if (!OFS_MpvLoader::Load()) {
-        LOG_ERROR("Failed to load mpv library.");
         return false;
     }
 
@@ -179,6 +176,7 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
+    LOG_INFO("OFS creating window...");
     window = SDL_CreateWindow(
         "OpenFunscripter " OFS_LATEST_GIT_TAG "@" OFS_LATEST_GIT_HASH,
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -201,6 +199,12 @@ bool OpenFunscripter::Init(int argc, char* argv[])
         return false;
     }
 
+    LOG_INFO("MPV init...");
+    if (!OFS_MpvLoader::Load()) {
+        LOG_ERROR("Failed to load mpv library.");
+        return false;
+    }
+
     if (!imguiSetup()) {
         LOG_ERROR("Failed to setup ImGui");
         return false;
@@ -211,6 +215,7 @@ bool OpenFunscripter::Init(int argc, char* argv[])
     EV::Init();
     LoadedProject = std::make_unique<OFS_Project>();
 
+    LOG_INFO("Main video player init...");
     player = std::make_unique<OFS_Videoplayer>(VideoplayerType::Main);
     if (!player->Init(prefState.forceHwDecoding)) {
         LOG_ERROR("Failed to initialize videoplayer.");
@@ -264,8 +269,8 @@ bool OpenFunscripter::Init(int argc, char* argv[])
 
     specialFunctions = std::make_unique<SpecialFunctionsWindow>();
     etcode = std::make_unique<eTCodeInteractive>();
-    controllerInput = std::make_unique<ControllerInput>();
-    controllerInput->Init();
+    // controllerInput = std::make_unique<ControllerInput>();
+    // controllerInput->Init();
     simulator.Init();
 
     FunscriptHeatmap::Init();
@@ -1546,7 +1551,7 @@ void OpenFunscripter::update() noexcept
     extensions->Update(delta);
     player->Update(delta);
     playerControls.videoPreview->Update(delta);
-    ControllerInput::UpdateControllers();
+    // ControllerInput::UpdateControllers();
     scripting->Update();
     scriptTimeline.Update();
 
@@ -1830,7 +1835,7 @@ void OpenFunscripter::Shutdown() noexcept
     OFS_MpvLoader::Unload();
     OFS_FileLogger::Shutdown();
     webApi->Shutdown();
-    controllerInput->Shutdown();
+    // controllerInput->Shutdown();
 
     SDL_GL_DeleteContext(glContext);
     SDL_DestroyWindow(window);

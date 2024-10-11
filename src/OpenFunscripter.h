@@ -148,7 +148,7 @@ public:
     std::unique_ptr<OFS_KeybindingSystem> keys;
     std::unique_ptr<SpecialFunctionsWindow> specialFunctions;
     std::unique_ptr<ScriptingMode> scripting;
-    std::unique_ptr<ControllerInput> controllerInput;
+    // std::unique_ptr<ControllerInput> controllerInput;
     std::unique_ptr<OFS_Preferences> preferences;
     std::unique_ptr<UndoSystem> undoSystem;
     std::unique_ptr<OFS_LuaExtensions> extensions;
