@@ -7,6 +7,7 @@
 #include <iterator>
 
 #include <imgui.h>
+#include <variant>
 
 namespace sevfate {
 
@@ -263,12 +264,49 @@ namespace sevfate {
         }
     }
 
+    bool AxisScriptLink::_send_normal_cmd(tcode::CommandEndpoint& ep, tcode::fractional<uint32_t> v)
+    {
+        if (ep.supports_normal_update()) {
+            ep.pend_normal_update(v);
+            _last_command.emplace<normal_cmd_t>(v);
+            return true;
+        }
+        return false;
+    }
+    bool AxisScriptLink::_send_interval_cmd(tcode::CommandEndpoint& ep, tcode::fractional<uint32_t> v, uint32_t interval)
+    {
+        if (ep.supports_interval_update()) {
+            ep.pend_interval_update(v, interval);
+            _last_command.emplace<interval_cmd_t>(v, interval);
+            return true;
+        }
+        return false;
+    }
+    bool AxisScriptLink::_send_speed_cmd(tcode::CommandEndpoint& ep, tcode::fractional<uint32_t> v, uint32_t speed)
+    {
+        if (ep.supports_speed_update()) {
+            ep.pend_speed_update(v, speed);
+            _last_command.emplace<speed_cmd_t>(v, speed);
+            return true;
+        }
+        return false;
+    }
+    bool AxisScriptLink::_send_stop_cmd(tcode::CommandEndpoint& ep)
+    {
+        if (ep.supports_stop_cmd()) {
+            ep.pend_stop();
+            _last_command.emplace<std::monostate>();
+            return true;
+        }
+        return false;
+    }
+
     void AxisScriptLink::apply(tcode::CommandEndpoint& ep, size_t delta_ms)
     {
         std::shared_ptr<Funscript> linked_funscript = _script.lock();
         if (linked_funscript) {
             auto& player = OpenFunscripter::ptr->player;
-            // TODO: Add support for _stop_on_pause state.
+            // TODO: Replace with event-driven logic.
             if (player->IsPaused() && !_paused_update_state) {
                 _paused_update_state = true;
                 _ms_until_next_update = 0; // Triggers a normal update once when paused.
@@ -277,7 +315,6 @@ namespace sevfate {
                 _paused_update_state = false;
                 _ms_until_next_update = 0; // Returns to normal operation when un-paused.
             }
-            // TODO: Adapt based on supported commands.
             assert(_ms_until_next_update >= 0);
             if (_ms_until_next_update <= delta_ms) {
                 auto current_playback_time = player->CurrentTime();
@@ -302,9 +339,7 @@ namespace sevfate {
                             tcode::map(pos, 0.f, 1.f, (float)limit_min, (float)limit_max);
                     }
 
-                    if (ep.supports_normal_update()) {
-                        ep.pend_normal_update({ scaled_pos, TARGET_MAX });
-                    }
+                    _send_normal_cmd(ep, { scaled_pos, TARGET_MAX });
                     _ms_until_next_update = _paused_update_state ? 60 * 1000 : 1;
                 }
                 else if (!_paused_update_state) {
@@ -318,11 +353,16 @@ namespace sevfate {
                             tcode::map(target, 0.f, 1.f, (float)limit_min, (float)limit_max);
                     }
 
-                    // Limit all sent commands to 60 second max interval.
+                    // Limit minimum speed of sent commands.
                     float ms_interval = std::min(interval, 60.f) * 1000.f;
                     if (ep.supports_interval_update()) {
-                        ep.pend_interval_update({ scaled_tgt, TARGET_MAX }, ms_interval);
+                        _send_interval_cmd(ep, { scaled_tgt, TARGET_MAX }, ms_interval);
                     }
+                    else {
+                        // Fallback. TODO: Adapt based on axis supported commands.
+                        _send_normal_cmd(ep, { scaled_tgt, TARGET_MAX });
+                    }
+                    // Limit to 60 second max interval between sent commands.
                     _ms_until_next_update = std::min(static_cast<int32_t>(ms_interval), MAX_UPDATE_PERIOD_MS);
                 }
             }

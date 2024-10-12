@@ -6,6 +6,8 @@
  */
 
 #include <OFS_StateHandle.h>
+#include <OFS_VideoplayerEvents.h>
+#include <OFS_EventSystem.h>
 #include <UI/OFS_ETCode/axis_control.hpp>
 #include <UI/OFS_ETCode/state.hpp>
 #include <tcode/ParserDispatcher.hpp>
@@ -29,6 +31,7 @@ public:
 
 protected:
     uint32_t stateHandle = 0xFFFF'FFFF;
+    OFS_EventQueue::Handle _play_pause_change_handle;
 
     std::string _conn_path{};
     tcode::ConnectionConfig _conn_cfg{};
@@ -82,6 +85,8 @@ private:
     void _build_property(tcode::common::CommandIndex cmd_idx, const std::string& prop_name, tcode::PropertyMetadata& prop_meta);
 
     void _handle_axes();
+    void _handle_axes_on_pause();
+    void _handle_axes_on_play();
     size_t _handle_axes_get_time_delta();
     void _handle_io();
     /** Performs a manual state reset */
@@ -90,6 +95,7 @@ private:
     // void _register_plot_history_callbacks(tcode::Registry& reg);
     void _connection_setup();
 
+    void _on_video_playpause_change(const PlayPauseChangeEvent* ev) noexcept;
     void _save_state();
 };
 

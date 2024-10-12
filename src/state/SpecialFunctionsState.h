@@ -7,6 +7,7 @@ enum class SpecialFunctionType : int32_t
 {
 	RangeExtender,
 	RamerDouglasPeucker, 
+    /* TODO: Remap */
 	TotalFunctionCount
 };
 

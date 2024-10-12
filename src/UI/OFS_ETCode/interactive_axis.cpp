@@ -201,6 +201,31 @@ namespace sevfate {
         if (ImGui::Checkbox("Invert", &_invert)) {
             _ms_until_next_update = 0;
         }
+        if (ImGui::TreeNode("Debug display")) {
+            auto& last_cmd = get_last_command();
+            switch (last_cmd.index()) {
+                case 0: {
+                    ImGui::Text("Last command: -");
+                } break;
+                case 1: {
+                    auto& cmd = std::get<1>(last_cmd);
+                    ImGui::Text("Last command: %3d", cmd.numerator());
+                } break;
+                case 2: {
+                    auto& cmd = std::get<2>(last_cmd);
+                    ImGui::Text("Last command: %3d@%dms", cmd.first.numerator(), cmd.second);
+                } break;
+                case 3: {
+                    auto& cmd = std::get<3>(last_cmd);
+                    ImGui::Text("Last command: %3d@%d", cmd.first.numerator(), cmd.second);
+                } break;
+                default: {
+                    /* NOP */
+                } break;
+            }
+            ImGui::Text("Next command in %d ms", _ms_until_next_update);
+            ImGui::TreePop();
+        }
     }
 
 } // namespace sevfate
@@ -256,13 +281,15 @@ void eTCodeInteractive::_build_axis_control(tcode::common::CommandIndex cmd_idx,
             script_link.build_ui(ep);
             ImGui::EndTabItem();
         }
+        if (ep.supports_stop_cmd()) {
+            ImGui::Checkbox("Stop on pause", &ep_ctl_state.get_stop_on_pause_mut());
+        }
         ImGui::EndTabBar();
     }
 }
 
 void eTCodeInteractive::_handle_axes()
 {
-    // TODO: Take into account _stop_on_pause
     auto delta_ms = _handle_axes_get_time_delta();
     auto [reg_lck, reg] = _state.acquire_registry();
     for (auto& cmd_idx_ep : reg.get_endpoints()) {
@@ -286,4 +313,27 @@ void eTCodeInteractive::_handle_axes()
             }
         }
     }
+}
+
+void eTCodeInteractive::_handle_axes_on_pause()
+{
+    auto [reg_lck, reg] = _state.acquire_registry();
+    for (auto& cmd_idx_ep : reg.get_endpoints()) {
+        tcode::common::CommandIndex cmd_idx = cmd_idx_ep.first;
+        tcode::CommandEndpoint& ep = cmd_idx_ep.second;
+        // Retrieve the axis state for the current endpoint.
+        auto ep_ctl_state_it =
+            std::lower_bound(_axis_control_state.begin(), _axis_control_state.end(), cmd_idx);
+        if (ep_ctl_state_it != _axis_control_state.end() && *ep_ctl_state_it == cmd_idx) {
+            sevfate::AxisControlElement& ep_ctl_state = *ep_ctl_state_it;
+            // Handle _stop_on_pause
+            if (ep_ctl_state.get_stop_on_pause()) {
+                ep.pend_stop();
+            }
+        }
+    }
+}
+
+void eTCodeInteractive::_handle_axes_on_play()
+{
 }

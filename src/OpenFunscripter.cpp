@@ -2864,6 +2864,12 @@ void OpenFunscripter::ShowStatisticsWindow(bool* open) noexcept
         }
     }
 
+    {
+        auto [pos, target, interval] = ActiveFunscript()->getInterpolatedAction(currentTime);
+        ImGui::Text("Interpolated: pos=%2d, target=%2d, interval=%.2f",
+            (int)(pos * 100.f), (int)(target * 100.f), interval * 1000.f);
+    }
+
     ImGui::End();
 }
 

@@ -12,12 +12,15 @@ struct OFS_EventPolicy
     }
 };
 
+
+using OFS_EventQueue = eventpp::EventQueue<OFS_EventType, void(const EventPointer&), OFS_EventPolicy>;
+
 class EV
 {
     private:
     static EV* instance;
     static uint32_t eventCounter;
-    eventpp::EventQueue<OFS_EventType, void(const EventPointer&), OFS_EventPolicy> queue;
+    OFS_EventQueue queue;
     inline bool process() noexcept { return queue.process(); }
     public:
 

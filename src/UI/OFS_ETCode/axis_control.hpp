@@ -5,6 +5,7 @@
  * @brief
  */
 
+#include "tcode/Messages.hpp"
 #include <Funscript/Funscript.h>
 #include <tcode/ParserDispatcherRegistry.hpp>
 #include <tcode/Utils.hpp>
@@ -13,6 +14,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
+#include <variant>
 
 namespace sevfate {
 
@@ -182,6 +184,11 @@ namespace sevfate {
     };
 
     class AxisScriptLink {
+    public:
+        typedef tcode::fractional<uint32_t> normal_cmd_t;
+        typedef std::pair<tcode::fractional<uint32_t>, tcode::request::IntervalData> interval_cmd_t;
+        typedef std::pair<tcode::fractional<uint32_t>, tcode::request::SpeedData> speed_cmd_t;
+
     protected:
         static constexpr uint32_t TARGET_DIGIT_COUNT = 3;
         static constexpr uint32_t TARGET_MIN = 0;
@@ -193,6 +200,7 @@ namespace sevfate {
         bool _invert = false;
         bool _paused_update_state = false;
         int32_t _ms_until_next_update = 0;
+        std::variant<std::monostate, normal_cmd_t, interval_cmd_t, speed_cmd_t> _last_command;
 
     public:
         constexpr AxisScriptLink() noexcept = default;
@@ -201,6 +209,17 @@ namespace sevfate {
 
         void apply(tcode::CommandEndpoint& ep, size_t delta_ms);
         void build_ui(tcode::CommandEndpoint& ep);
+
+        const auto& get_last_command() const
+        {
+            return _last_command;
+        }
+
+    private:
+        bool _send_normal_cmd(tcode::CommandEndpoint& ep, tcode::fractional<uint32_t> v);
+        bool _send_interval_cmd(tcode::CommandEndpoint& ep, tcode::fractional<uint32_t> v, uint32_t interval);
+        bool _send_speed_cmd(tcode::CommandEndpoint& ep, tcode::fractional<uint32_t> v, uint32_t speed);
+        bool _send_stop_cmd(tcode::CommandEndpoint& ep);
     };
 
     enum class AxisControlState : uint8_t { Unknown = 0,

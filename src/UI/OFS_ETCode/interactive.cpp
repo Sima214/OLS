@@ -12,8 +12,14 @@ eTCodeInteractive::eTCodeInteractive() noexcept
     _enable_packet_tracing = state.enable_packet_tracing;
     // Save defaults.
     _save_state();
+    // Hook event listeners.
+    _play_pause_change_handle = EV::Queue().appendListener(PlayPauseChangeEvent::EventType,
+        PlayPauseChangeEvent::HandleEvent(EVENT_SYSTEM_BIND(this, &eTCodeInteractive::_on_video_playpause_change)));
 }
-eTCodeInteractive::~eTCodeInteractive() = default;
+eTCodeInteractive::~eTCodeInteractive()
+{
+    EV::Queue().removeListener(PlayPauseChangeEvent::EventType, _play_pause_change_handle);
+}
 
 void eTCodeInteractive::_save_state()
 {
@@ -27,6 +33,19 @@ void eTCodeInteractive::_save_state()
     state.serial_port_baud_rate = _conn_cfg.serial_port_baud_rate();
     state.enable_suggested_property_intervals = _enable_suggested_property_intervals;
     state.enable_packet_tracing = _enable_packet_tracing;
+}
+
+void eTCodeInteractive::_on_video_playpause_change(const PlayPauseChangeEvent* ev) noexcept
+{
+    OFS_PROFILE(__FUNCTION__);
+    if (ev->playerType == VideoplayerType::Main) {
+        if (ev->paused) {
+            _handle_axes_on_pause();
+        }
+        else {
+            _handle_axes_on_play();
+        }
+    }
 }
 
 size_t eTCodeInteractive::_handle_axes_get_time_delta()

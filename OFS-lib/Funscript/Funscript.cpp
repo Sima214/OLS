@@ -191,8 +191,6 @@ std::tuple<float, float, float> Funscript::getInterpolatedAction(float time) con
         return { pos_norm, pos_norm, std::numeric_limits<float>::infinity() };
     }
 
-    // TODO: Add support for step actions.
-
     // Boundary conditions.
     if (time <= data.Actions.front().atS) {
         float pos_norm = data.Actions.front().pos / 100.f;
@@ -221,6 +219,7 @@ std::tuple<float, float, float> Funscript::getInterpolatedAction(float time) con
     auto& next_action = data.Actions.at(index + 1);
 
     if (time > curr_action.atS && time < next_action.atS) [[likely]] {
+        // TODO: Doesn't match display when not both actions are step.
         if (!(curr_action.flags & FunscriptAction::ModeFlagBits::Step)) [[likely]] {
             // Interpolate position.
             float pos_start = curr_action.pos / 100.f;
